@@ -29,6 +29,7 @@
             <input id="btnSendCodigoAutorizador" type="button" value="Send Codigo Autorizador" onclick="sendCodigoAutorizador()" style="height: 50px; width: 200px; display: none; background-color: #AAAF4F; color: black; border:none;float:left;margin-left:2px;" />
             <input id="btnSendPassword" type="button" value="Send Password" onclick="sendPassword()" style="height: 50px; width: 200px; display: none; background-color: #AAA; color: black; border:none;float:left;margin-left:2px;" />
             <input id="btnRecallTransaction" type="button" value="Recall Transaction" onclick="recallTransaction()" style="height: 50px; width: 150px; display: none;  background-color: #cc6633; color: white; border:none;float:left;margin-left:2px;" />
+            <input id="btnPreparePayment" type="button" value="Prepare Payment" onclick="preparePayment()" style="height: 50px; width: 150px; display: none; background-color: #aec26b; color: white; border:none;float:left;margin-left:2px;" />
             <input id="btnSendAddTender" type="button" value="Add Tender" onclick="addTender()" style="height: 50px; width: 150px; display: none;  background-color: #aa9922; color: black; border:none;float:left;margin-left:2px;" />
             <input id="btnFinishTransaction" type="button" value="Finish Transaction" onclick="finishTransaction()" style="height: 50px; width: 150px; display: none;  background-color: #aa0099; color: white; border:none;float:left;margin-left:2px;" />        </div>
 
@@ -285,6 +286,7 @@
                     "method": "AddTender",
                     "params": {
                         "tenderType": "cash",
+                        //"tenderType": "manual-visa",
                         "amount": 118
                     },
                     "id": (parseInt(currentId) + 1)
@@ -298,6 +300,27 @@
                 };
 
                 writeOnScreen('[INFO] - Trying to Add Tender with ID: ' + (parseInt(currentId) + 1));
+                window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonAddTender);
+            }            
+
+            function preparePayment() {
+                'use strict';
+                
+                var jsonPreparePayment = {
+                    'jsonrpc': '2.0',
+                    'method': 'preparePayment',
+                    'id': 3
+                };
+                
+                var successCallback = function (data) {
+                    writeOnScreen('[SUCCESS] - Successfuly Prepare Payment:' + data);
+                };
+
+                var errorCallback = function (reason) {
+                    writeOnScreen('[ERROR] - Error during Prepare Payment: ' + reason);
+                };
+
+                writeOnScreen('[INFO] - Trying to Prepare Payment with ID: ' + (parseInt(currentId) + 1));
                 window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonAddTender);
             }
 
@@ -559,6 +582,7 @@
                     $('#btnSignOff').show();
                     $('#btnRecallTransaction').hide();
                     $('#btnFinishTransaction').show();
+                    $('#btnPreparePayment').show();                    
                 } else if (msg === 'TransactionFinished') {
                     alert('Transaction Finished with Success!');
                     writeOnScreen('[SUCCESS] - Transaction Finished with Success');
