@@ -14,7 +14,7 @@
 
     <body>
         <div class="fixedMenu">
-            
+
             <h1>Unifo Socket Connection POC</h1>
 
             <input id="btnConnect" type="button" value="Connect" onclick="connect()" style="height: 50px; width: 100px; border:none; background-color: #4decb4;float:left;" />
@@ -93,11 +93,43 @@
                 console.log(message);
 
                 var node = document.getElementById('divResult'),
-                    newNode = document.createElement('p');
+                    newNode = document.createElement('div');
 
-                newNode.appendChild(document.createTextNode('[' + getCurrentDate() + '] ' + message));
+                newNode.appendChild(document.createTextNode(message));
+                
                 newNode.appendChild(document.createElement('br'));
+                newNode.appendChild(document.createElement('br'));
+                
                 node.appendChild(newNode);
+            }
+            
+            function writeJSON(json) {                
+                var node = document.getElementById('divResult')                
+                var str = JSON.stringify(json, undefined, 4);
+                
+                node.appendChild(document.createElement('pre')).innerHTML = syntaxHighlight(str);
+            }
+
+            function syntaxHighlight(json) {
+                if (typeof json != 'string') {
+                    json = JSON.stringify(json, undefined, 2);
+                }
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    var cls = 'number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'key';
+                        } else {
+                            cls = 'string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
             }
 
             function setCurrentId(data) {
@@ -115,6 +147,7 @@
             /* ######## CONNECTION - 18002 and 18004 ######## */
             function connect() {
                 'use strict';
+                
                 var successConnect = function (data) {
                     writeOnScreen('[SUCCESS] - Connected on ' + host + ':' + port);
                     var successCallback = function () {
@@ -283,7 +316,7 @@
 
             function addTender() {
                 'use strict';
-                
+
                 var jsonAddTender = {
                     "jsonrpc": "2.0",
                     "method": "AddTender",
@@ -308,13 +341,13 @@
 
             function preparePayment() {
                 'use strict';
-                
+
                 var jsonPreparePayment = {
                     'jsonrpc': '2.0',
                     'method': 'PreparePayment',
                     'id': 3
                 };
-                
+
                 var successCallback = function (data) {
                     writeOnScreen('[SUCCESS] - Successfuly Prepare Payment:' + data);
                 };
@@ -625,7 +658,8 @@
                     var jsonResp = ev.metadata.data,
                         msg;
 
-                    writeOnScreen('JSON Received from UNIFO: \n' + JSON.stringify(ev.metadata.data));
+                    writeOnScreen('JSON Received from UNIFO): \n');
+                    writeJSON(ev.metadata.data);
 
                     if (jsonResp) {
                         setCurrentId(jsonResp);

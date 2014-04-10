@@ -1,14 +1,32 @@
-.fixedMenu {    
+.fixedMenu {
     top: 0;
     z-index: 100;
     width: 100%;
     background-color: white;
     position: fixed;
-    border-bottom: solid 1px black;    
+    border-bottom: solid 1px black;
     float: left;
 }
-
 .result {
-    padding-top: 120px;
+    padding-top: 130px;
     display: block;
+}
+pre {    
+    display: block;    
+    margin: 5px;
+}
+.string {
+    color: green;
+}
+.number {
+    color: darkorange;
+}
+.boolean {
+    color: blue;
+}
+.null {
+    color: magenta;
+}
+.key {
+    color: red;
 }

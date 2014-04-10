@@ -1,6 +1,7 @@
-/*globals console, $, alert */
+console.log('Initializing POC');
 
 
+// Globals
 function getCurrentDate() {
     'use strict';
     var now = new Date(),
@@ -46,11 +47,53 @@ function writeOnScreen(message) {
     console.log(message);
 
     var node = document.getElementById('divResult'),
-        newNode = document.createElement('p');
+        newNode = document.createElement('div');
 
-    newNode.appendChild(document.createTextNode('[' + getCurrentDate() + '] ' + message));
+    newNode.appendChild(document.createTextNode(message));
+    //newNode.appendChild(document.createTextNode('[' + getCurrentDate() + '] ' + message));
+
     newNode.appendChild(document.createElement('br'));
+    newNode.appendChild(document.createElement('br'));
+
     node.appendChild(newNode);
+}
+
+function writeJson(json) {
+    var jsonAddTender = {
+        "jsonrpc": "2.0",
+        "method": "AddTender",
+        "params": {
+            "tenderType": "cash",
+            //"tenderType": "manual-visa",
+            "amount": 35000
+        },
+        "id": 5
+    };
+    var node = document.getElementById('divResult');
+
+    node.appendChild(syntaxHighlight(jsonAddTender));
+}
+
+function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+        json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
 }
 
 function setCurrentId(data) {
@@ -90,6 +133,8 @@ function connect() {
             isConnected = false;
         };
 
+        writeJson();
+
         window.tlantic.plugins.socket.connect(successCallback, errorCallback, host, callbackPort);
     };
 
@@ -120,7 +165,11 @@ function disconnect() {
                 document.getElementById('btnSignOff').style.display = 'none';
                 document.getElementById('btnRecallTransaction').style.display = 'none';
                 document.getElementById('btnSendCodigoOperador').style.display = 'none';
+                document.getElementById('btnSendCodigoAutorizador').style.display = 'none';
                 document.getElementById('btnGetStatus').style.display = 'none';
+                document.getElementById('btnFinishTransaction').style.display = 'none';
+                document.getElementById('btnPreparePayment').style.display = 'none';
+                document.getElementById('btnSendAddTender').style.display = 'none';
 
                 isConnected = false;
             };
@@ -232,12 +281,14 @@ function recallTransaction() {
 
 function addTender() {
     'use strict';
+
     var jsonAddTender = {
         "jsonrpc": "2.0",
         "method": "AddTender",
         "params": {
             "tenderType": "cash",
-            "amount": 118
+            //"tenderType": "manual-visa",
+            "amount": 35000
         },
         "id": (parseInt(currentId) + 1)
     };
@@ -251,6 +302,27 @@ function addTender() {
 
     writeOnScreen('[INFO] - Trying to Add Tender with ID: ' + (parseInt(currentId) + 1));
     window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonAddTender);
+}
+
+function preparePayment() {
+    'use strict';
+
+    var jsonPreparePayment = {
+        'jsonrpc': '2.0',
+        'method': 'PreparePayment',
+        'id': 3
+    };
+
+    var successCallback = function (data) {
+        writeOnScreen('[SUCCESS] - Successfuly Prepare Payment:' + data);
+    };
+
+    var errorCallback = function (reason) {
+        writeOnScreen('[ERROR] - Error during Prepare Payment: ' + reason);
+    };
+
+    writeOnScreen('[INFO] - Trying to Prepare Payment with ID: ' + (parseInt(currentId) + 1));
+    window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonPreparePayment);
 }
 
 function finishTransaction() {
@@ -477,6 +549,9 @@ function treatMessage(msg) {
         $('#btnSendCodigoAutorizador').hide();
         $('#btnRecallTransaction').hide();
         $('#btnSendPassword').hide();
+        $('#btnFinishTransaction').hide();
+        $('btnPreparePayment').hide();
+        $('#btnSendAddTender').hide();
     } else if (msg === 'OperatorSignedOn') {
         writeOnScreen('[INFO] - The user are Signed On');
         $('#btnRecallTransaction').show();
@@ -511,11 +586,12 @@ function treatMessage(msg) {
         $('#btnSignOff').show();
         $('#btnRecallTransaction').hide();
         $('#btnFinishTransaction').show();
+        $('#btnPreparePayment').show();
     } else if (msg === 'TransactionFinished') {
         alert('Transaction Finished with Success!');
         writeOnScreen('[SUCCESS] - Transaction Finished with Success');
         $('#btnSendAddTender').hide();
-        $('#btnSignOff').show();
+        $('#btnPreparePayment').show();
     } else if (msg === 'PreparePayment') {
         sendPreparePayment();
     } else if (msg === 'Numero SafeBag ') {
@@ -529,7 +605,7 @@ function treatMessage(msg) {
     } else if (msg === 'Transaccao nao encontrada') {
         sendYes();
     } else if (msg === 'Saida Operador') {
-        sendNull();
+        sendYes();
     } else if (msg === 'Transaccao recuperada anteriormente') {
         sendYes();
     } else if (msg === 'Utilizar o saldo?') {
@@ -537,7 +613,7 @@ function treatMessage(msg) {
     } else if (msg === 'OK') {
         writeOnScreen('[INFO] - Returned OK');
     } else {
-        sendNull();
+        sendYes();
     }
 }
 
@@ -547,7 +623,7 @@ function treatReturn(ev) {
         var jsonResp = ev.metadata.data,
             msg;
 
-        writeOnScreen('JSON Received from UNIFO: \n' + JSON.stringify(ev.metadata.data));
+        writeOnScreen('JSON Received from UNIFO: \n' + JSON.stringify(ev.metadata.data, undefined, 4));
 
         if (jsonResp) {
             setCurrentId(jsonResp);
