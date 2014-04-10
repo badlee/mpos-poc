@@ -14,6 +14,7 @@
 
     <body>
         <div class="fixedMenu">
+            
             <h1>Unifo Socket Connection POC</h1>
 
             <input id="btnConnect" type="button" value="Connect" onclick="connect()" style="height: 50px; width: 100px; border:none; background-color: #4decb4;float:left;" />
@@ -167,9 +168,10 @@
                             document.getElementById('btnRecallTransaction').style.display = 'none';
                             document.getElementById('btnSendCodigoOperador').style.display = 'none';
                             document.getElementById('btnSendCodigoAutorizador').style.display = 'none';
-                            document.getElementById('btnGetStatus').style.display = 'none';
-                            document.getElementById('btnSendAddTenter').style.display = 'none';
-                            document.getElementById('btFinishTransaction').style.display = 'none';
+                            document.getElementById('btnGetStatus').style.display = 'none';                            
+                            document.getElementById('btnFinishTransaction').style.display = 'none';
+                            document.getElementById('btnPreparePayment').style.display = 'none';
+                            document.getElementById('btnSendAddTender').style.display = 'none';
 
                             isConnected = false;
                         };
@@ -281,13 +283,14 @@
 
             function addTender() {
                 'use strict';
+                
                 var jsonAddTender = {
                     "jsonrpc": "2.0",
                     "method": "AddTender",
                     "params": {
                         "tenderType": "cash",
                         //"tenderType": "manual-visa",
-                        "amount": 118
+                        "amount": 35000
                     },
                     "id": (parseInt(currentId) + 1)
                 };
@@ -308,7 +311,7 @@
                 
                 var jsonPreparePayment = {
                     'jsonrpc': '2.0',
-                    'method': 'preparePayment',
+                    'method': 'PreparePayment',
                     'id': 3
                 };
                 
@@ -321,7 +324,7 @@
                 };
 
                 writeOnScreen('[INFO] - Trying to Prepare Payment with ID: ' + (parseInt(currentId) + 1));
-                window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonAddTender);
+                window.tlantic.plugins.socket.send(successCallback, errorCallback, host, port, jsonPreparePayment);
             }
 
             function finishTransaction() {
@@ -548,6 +551,9 @@
                     $('#btnSendCodigoAutorizador').hide();
                     $('#btnRecallTransaction').hide();
                     $('#btnSendPassword').hide();
+                    $('#btnFinishTransaction').hide();
+                    $('btnPreparePayment').hide();
+                    $('#btnSendAddTender').hide();
                 } else if (msg === 'OperatorSignedOn') {
                     writeOnScreen('[INFO] - The user are Signed On');
                     $('#btnRecallTransaction').show();
@@ -587,7 +593,7 @@
                     alert('Transaction Finished with Success!');
                     writeOnScreen('[SUCCESS] - Transaction Finished with Success');
                     $('#btnSendAddTender').hide();
-                    $('#btnSignOff').show();
+                    $('#btnPreparePayment').show();
                 } else if (msg === 'PreparePayment') {
                     sendPreparePayment();
                 } else if (msg === 'Numero SafeBag ') {
@@ -609,7 +615,7 @@
                 } else if (msg === 'OK') {
                     writeOnScreen('[INFO] - Returned OK');
                 } else {
-                    sendNull();
+                    sendYes();
                 }
             }
 
